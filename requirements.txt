@@ -1,0 +1,14 @@
+
+---
+
+## 📦 `requirements.txt`
+
+Create this file in the same folder:
+
+```txt
+streamlit
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
