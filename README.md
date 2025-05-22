@@ -29,6 +29,3 @@ This is a Streamlit-powered web app that predicts whether a user is at risk for 
   - Age
 
 ---
-
-## 📁 Folder Structure
-
