@@ -1,44 +1,32 @@
 # 🩺 Early Diabetes Prediction Web App
 
-This is an interactive web app built with **Streamlit** that predicts whether an individual is at risk of diabetes based on health indicators. It uses the **Pima Indians Diabetes Dataset** and provides model visualizations, real-time predictions, and an intuitive UI.
+A multi-page Streamlit web application that predicts diabetes risk based on user input. Built using the Pima Indians Diabetes Dataset and Decision Tree classifiers, this app allows users to get instant predictions, explore model performance, and visualize decision logic interactively.
 
 ---
 
-## 📌 Objective
+## 🚀 Live Demo
 
-To help users predict the likelihood of diabetes using common health metrics such as glucose level, BMI, age, and more. The app uses a **Decision Tree Classifier**, and users can also explore an optimized model built using **GridSearchCV**.
-
----
-
-## 🚀 Key Features
-
-✅ Real-time prediction of diabetes risk using a form interface  
-✅ Customizable model visualization (Decision Tree / GridSearchCV Best Model)  
-✅ Confusion matrix visualization for understanding model performance  
-✅ Correlation heatmap for exploring relationships between features  
-✅ Built with clean UI and multi-page navigation using Streamlit
+👉 [Click here to try the app](https://your-app-name.streamlit.app)  
+<sub>🔁 Replace with your actual Streamlit Cloud link once deployed</sub>
 
 ---
 
-## 🧠 Machine Learning Models
+## 📌 Project Highlights
 
-### 1. **Decision Tree Classifier**
-- Criterion: `entropy`
-- Max depth: 3
-
-### 2. **GridSearchCV Optimized Classifier**
-- Tuning:
-  - `criterion`: `gini`, `entropy`
-  - `max_depth`: 4–20
-- Selected using `roc_auc` score
+- ✅ Built with **Streamlit**
+- 🧠 **Decision Tree Classifier** + **GridSearchCV** optimization
+- 📊 Visual **confusion matrix** and **decision tree** rendering
+- 📈 **Correlation heatmap** for feature insight
+- 🎯 Real-time **user input prediction**
+- 📁 All code modularized across 4 clean files
 
 ---
 
-## 📊 Dataset
+## 📊 Dataset Summary
 
-- **Name**: Pima Indians Diabetes Database  
-- **Source**: [Kaggle](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database)
-- **Records**: 768
+- **Source**: [Kaggle – Pima Indians Diabetes Dataset](https://www.kaggle.com/uciml/pima-indians-diabetes-database)
+- **Records**: 768 patients
+- **Target**: `Outcome` (0 = Non-diabetic, 1 = Diabetic)
 - **Features**:
   - Pregnancies
   - Glucose
@@ -48,13 +36,26 @@ To help users predict the likelihood of diabetes using common health metrics suc
   - BMI
   - Diabetes Pedigree Function
   - Age
-- **Target**: `Outcome` (0 = No diabetes, 1 = Diabetes)
 
 ---
 
-## 🖥️ Run Locally
+## 🧠 Machine Learning Models
 
-### 1. Clone the repository
+### 1. Decision Tree Classifier
+- Criterion: `'entropy'`
+- Max Depth: `3`
+
+### 2. GridSearchCV Optimized Tree
+- Parameter Grid:
+  - `criterion`: `'gini'` or `'entropy'`
+  - `max_depth`: `4–20`
+- Evaluated via `roc_auc`
+
+---
+
+## 🖥️ How to Run Locally
+
+### 1. Clone this repo
 ```bash
-git clone https://github.com/aarshdesai-ds/diabetes-prediction-streamlit.git
-cd diabetes-prediction-streamlit
+git clone https://github.com/aarshdesai-ds/diabetes-prediction.git
+cd diabetes-prediction
