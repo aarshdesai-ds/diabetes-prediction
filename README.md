@@ -6,9 +6,7 @@ A multi-page Streamlit web application that predicts diabetes risk based on user
 
 ## 🚀 Live Demo
 
-👉 [Click here to try the app]((https://diabetes-prediction-ztgfizdhbtcqotwzasa6zk.streamlit.app/))  
-<sub>🔁 Replace with your actual Streamlit Cloud link once deployed</sub>
-
+👉 [Click here to try the app]([https://diabetes-prediction-ztgfizdhbtcqotwzasa6zk.streamlit.app/])  
 ---
 
 ## 📌 Project Highlights
