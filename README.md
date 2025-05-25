@@ -84,14 +84,15 @@ The dataset includes:
 ## 🖥️ How to Run Locally
 
 1. Clone this repository  
-```bash
-git clone https://github.com/aarshdesai-ds/diabetes-prediction.git
-cd diabetes-prediction
+   `git clone https://github.com/<your-username>/diamond-price-prediction.git`
+2. Launch the notebook  
+   `streamlit run diabates_main.py`
+3. Run all cells to reproduce the workflow and results
 
-2. Launch the Streamlit app
-streamlit run diabetes_main.py
 
 ---
+
+
 
 ## Key Takeaways
 Decision Trees offer interpretable yet powerful predictions
