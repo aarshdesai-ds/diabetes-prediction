@@ -84,7 +84,7 @@ The dataset includes:
 ## 🖥️ How to Run Locally
 
 1. Clone this repository  
-   `git clone https://github.com/<your-username>/diamond-price-prediction.git`
+   `git clone https://github.com/<your-username>/diabetes-prediction.git`
 2. Launch the notebook  
    `streamlit run diabates_main.py`
 3. Run all cells to reproduce the workflow and results
