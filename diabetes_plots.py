@@ -19,7 +19,6 @@ from IPython.display import Image
 # Define a function 'app()' which accepts 'census_df' as an input.
 def app(diabetes_df):
     warnings.filterwarnings('ignore')
-    st.set_option('deprecation.showPyplotGlobalUse', False)
     st.title("Visualise the Diabetes Prediction Web app ")
 
     if st.checkbox("Show the correlation heatmap"):
