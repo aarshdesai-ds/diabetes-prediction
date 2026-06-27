@@ -171,12 +171,23 @@ works unchanged on Cloud Run and HF Spaces.
 - ✅ **Calibration** (`CalibratedClassifierCV`, Platt scaling) so the probability is trustworthy.
 - ✅ **Repeated CV** confidence interval on the AUC (5×10 stratified).
 - ✅ **Threshold tuning** to a target sensitivity, chosen on out-of-fold data.
+- ✅ **AUPRC** + precision-recall curve (imbalance-aware metric).
+- ✅ **Fairness slicing** — per-age-band metrics, with the disparity flagged.
+
+### Fairness finding
+Subgroup analysis surfaced a real bias risk: the model's recall on diabetic
+patients is **~0.64 for ages 21–29 vs ~0.89–1.00 for older bands** — it misses
+younger diabetic patients more often. This is exactly what bias auditing is for;
+the model card documents it and suggests mitigations (per-group thresholds, more
+data for under-served bands). *Deep learning was deliberately not added* — on a
+768-row tabular dataset, tree ensembles outperform neural nets and we are already
+near the data's performance ceiling (~0.84 AUC).
 
 ## Possible future extensions
 
 - **Model monitoring** hooks (log inputs/predictions for drift detection).
 - **XGBoost / LightGBM** as additional candidate models.
-- **Fairness slicing** — report metrics across age bands to check for bias.
+- **Per-group threshold calibration** to close the age-band recall gap.
 
 ---
 

@@ -106,6 +106,35 @@ def app(diabetes_df):
             "F1 (diabetic)": t["f1_diabetic"],
         })
 
+    # --- Fairness: performance by age band --------------------------------
+    if st.checkbox("Fairness — performance by age band", value=True):
+        fair = metrics.get("fairness", {}).get("by_age", [])
+        if fair:
+            df_fair = pd.DataFrame(fair).set_index("band")
+            st.dataframe(df_fair, use_container_width=True)
+
+            recalls = df_fair["recall"].dropna()
+            fig, ax = plt.subplots(figsize=(8, 4))
+            recalls.plot.bar(ax=ax, color="#2c7fb8")
+            overall = metrics["test_set"]["recall_diabetic"]
+            ax.axhline(overall, ls="--", color="#d7191c",
+                       label=f"Overall recall ({overall})")
+            ax.set_ylabel("Recall (sensitivity)")
+            ax.set_ylim(0, 1.05)
+            ax.set_title("Diabetic-case recall by age band")
+            ax.legend()
+            st.pyplot(fig)
+
+            if len(recalls) > 1:
+                gap = round(float(recalls.max() - recalls.min()), 3)
+                msg = (f"Recall ranges {recalls.min():.2f}–{recalls.max():.2f} "
+                       f"across age bands (gap {gap}).")
+                (st.warning if gap >= 0.15 else st.info)(
+                    msg + " Large gaps mean the model detects diabetes unevenly "
+                    "across ages — a bias/deployment risk. Small bands also give "
+                    "noisy estimates."
+                )
+
     # --- Global SHAP importance -------------------------------------------
     if st.checkbox("Global feature importance (SHAP)", value=True):
         with st.spinner("Computing SHAP values across a sample…"):

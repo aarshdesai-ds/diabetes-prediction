@@ -24,6 +24,16 @@ def test_auprc_present_and_beats_baseline():
     assert len(t["pr_curve"]["recall"]) == len(t["pr_curve"]["precision"]) > 1
 
 
+def test_fairness_slices_cover_the_test_set():
+    m = load_metrics()
+    bands = m["fairness"]["by_age"]
+    assert len(bands) == len(config.AGE_BANDS)
+    # The age bands partition the test set, so their counts sum to n_samples.
+    assert sum(b["n"] for b in bands) == m["test_set"]["n_samples"]
+    for b in bands:
+        assert b["recall"] is None or 0.0 <= b["recall"] <= 1.0
+
+
 def test_calibration_and_threshold_metrics():
     m = load_metrics()
     # Calibration should not make the Brier score worse.

@@ -56,6 +56,16 @@ FEATURE_LABELS = {
     "Age": "Age (years)",
 }
 
+# --- Fairness ---------------------------------------------------------------
+# Subgroups for fairness/bias auditing. The dataset is all adult female Pima
+# patients, so age is the meaningful slicing axis. (label, low, high_inclusive)
+AGE_BANDS = [
+    ("21–29", 21, 29),
+    ("30–39", 30, 39),
+    ("40–49", 40, 49),
+    ("50+", 50, 200),
+]
+
 # --- Reproducibility -------------------------------------------------------
 RANDOM_STATE = 42
 TEST_SIZE = 0.30

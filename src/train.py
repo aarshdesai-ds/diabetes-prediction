@@ -134,6 +134,9 @@ def train_and_select(verbose: bool = True):
     pr_precision, pr_recall, _ = precision_recall_curve(y_test, y_proba)
     pr_curve = _downsample_curve(pr_recall, pr_precision, n=60)
 
+    # Fairness: performance per age band on the held-out test set.
+    fairness = _subgroup_metrics(X_test["Age"], y_test, y_proba, y_pred)
+
     metrics = {
         "generated_on": str(date.today()),
         "best_model": best_name,
@@ -169,6 +172,7 @@ def train_and_select(verbose: bool = True):
                 "fraction_positive": [round(float(v), 4) for v in frac_pos],
             },
         },
+        "fairness": {"by_age": fairness},
         "features": config.FEATURES,
         "n_total_records": int(len(df)),
     }
@@ -234,6 +238,37 @@ def _choose_threshold(y_true, proba) -> float:
     return best if found else config.DEFAULT_THRESHOLD
 
 
+def _subgroup_metrics(age, y_true, y_proba, y_pred) -> list[dict]:
+    """Per-age-band performance on the test set for fairness/bias auditing.
+
+    ROC AUC is only reported when a band contains both classes and enough
+    samples; small subgroups give unstable estimates, which is itself worth
+    surfacing rather than hiding.
+    """
+    age = np.asarray(age)
+    y_true = np.asarray(y_true)
+    rows = []
+    for label, lo, hi in config.AGE_BANDS:
+        mask = (age >= lo) & (age <= hi)
+        n = int(mask.sum())
+        yt, yp, yhat = y_true[mask], y_proba[mask], y_pred[mask]
+        positives = int(yt.sum())
+        tp = int(((yhat == 1) & (yt == 1)).sum())
+        pred_pos = int((yhat == 1).sum())
+        rows.append({
+            "band": label,
+            "n": n,
+            "prevalence": round(float(yt.mean()), 4) if n else None,
+            "recall": round(tp / positives, 4) if positives else None,
+            "precision": round(tp / pred_pos, 4) if pred_pos else None,
+            "roc_auc": (
+                round(float(roc_auc_score(yt, yp)), 4)
+                if n >= 10 and 0 < positives < n else None
+            ),
+        })
+    return rows
+
+
 def _downsample_curve(x, y, n: int) -> dict:
     """Evenly sample up to ``n`` points from a curve, rounding for compact JSON."""
     idx = np.linspace(0, len(x) - 1, min(n, len(x))).astype(int)
@@ -258,6 +293,10 @@ def _save_artifacts(model, metrics: dict) -> None:
     config.MODEL_CARD_PATH.write_text(_render_model_card(metrics))
 
 
+def _fmt(v) -> str:
+    return "—" if v is None else f"{v}"
+
+
 def _render_model_card(m: dict) -> str:
     t = m["test_set"]
     r = m["repeated_cv"]
@@ -265,6 +304,14 @@ def _render_model_card(m: dict) -> str:
     rows = "\n".join(
         f"| {name} | {info['cv_roc_auc']} |" for name, info in m["leaderboard"].items()
     )
+    fair = m["fairness"]["by_age"]
+    fair_rows = "\n".join(
+        f"| {b['band']} | {b['n']} | {_fmt(b['prevalence'])} | {_fmt(b['recall'])} "
+        f"| {_fmt(b['precision'])} | {_fmt(b['roc_auc'])} |"
+        for b in fair
+    )
+    recalls = [b["recall"] for b in fair if b["recall"] is not None]
+    recall_gap = round(max(recalls) - min(recalls), 4) if recalls else None
     return f"""# Model Card — Diabetes Risk Screening
 
 > **Not for clinical use.** This is an educational screening demo trained on a
@@ -315,6 +362,19 @@ Evaluated at the recommended operating threshold **{m['recommended_threshold']}*
 | Brier score (lower = better) | {c['brier_calibrated']} (was {c['brier_uncalibrated']} uncalibrated) |
 
 Confusion matrix (rows = actual, cols = predicted): `{t['confusion_matrix']}`
+
+## Fairness — performance by age band (held-out test set)
+Bias audit across age subgroups. Small bands give unstable estimates, which is
+itself a caveat worth surfacing.
+
+| Age band | n | Prevalence | Recall | Precision | ROC AUC |
+|---|---|---|---|---|---|
+{fair_rows}
+
+**Recall disparity across age bands: {_fmt(recall_gap)}.** A large gap means the
+model catches diabetic cases unevenly across ages — a deployment risk. Mitigations
+to consider: per-group thresholds, collecting more data for under-served bands, or
+reporting subgroup metrics to clinicians alongside each prediction.
 
 ## Limitations & ethical considerations
 - Small dataset from a single, narrow population — high risk of bias if applied
