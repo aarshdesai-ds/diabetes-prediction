@@ -64,3 +64,8 @@ TEST_SIZE = 0.30
 # diabetic patient (false negative) is usually costlier than a false alarm,
 # so the app lets the user lower this.
 DEFAULT_THRESHOLD = 0.5
+
+# For a screening tool we tune the operating threshold to hit a target
+# sensitivity (recall on the diabetic class) rather than using a naive 0.5.
+# The chosen threshold is picked on out-of-fold data and stored in metrics.json.
+TARGET_RECALL = 0.85

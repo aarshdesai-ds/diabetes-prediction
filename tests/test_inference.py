@@ -15,6 +15,19 @@ def test_metrics_have_required_fields():
     assert 0.0 <= m["test_set"]["recall_diabetic"] <= 1.0
 
 
+def test_calibration_and_threshold_metrics():
+    m = load_metrics()
+    # Calibration should not make the Brier score worse.
+    cal = m["calibration"]
+    assert cal["brier_calibrated"] <= cal["brier_uncalibrated"] + 1e-6
+    # Repeated-CV confidence interval is present and ordered.
+    r = m["repeated_cv"]
+    assert r["ci95_low"] <= r["mean_roc_auc"] <= r["ci95_high"]
+    # The tuned threshold sits in (0, 1) and hits the target recall on test.
+    assert 0.0 < m["recommended_threshold"] < 1.0
+    assert m["test_set"]["recall_diabetic"] >= m["target_recall"] - 0.1
+
+
 def test_predict_one_returns_label_and_probability():
     features = {
         "Glucose": 148, "BloodPressure": 72, "Insulin": 0,

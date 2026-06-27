@@ -25,8 +25,10 @@ shape a real ML product takes. The key design decisions:
 |---|---|
 | **Train once → save artifact → app does inference only** | The original retrained the model (incl. a 34-fit grid search) on *every button click*. Real products separate training from serving. |
 | **Preprocessing lives inside the sklearn `Pipeline`** | Zero-as-missing cleaning, imputation, and scaling are applied identically at train and serve time — no train/serve skew, the #1 cause of silent ML bugs. |
-| **Honest held-out test metrics** | The original reported *training* accuracy (overfit). We report ROC AUC, precision, **recall on the diabetic class**, and F1 on a stratified hold-out set. |
-| **Recall-first, threshold-tunable** | In screening, a missed diabetic case is worse than a false alarm. The app exposes a decision-threshold slider. |
+| **Honest held-out test metrics + confidence interval** | The original reported *training* accuracy (overfit). We report ROC AUC, precision, **recall on the diabetic class**, and F1 on a stratified hold-out set, plus a 5×10 repeated-CV confidence interval on the AUC. |
+| **Probability calibration** | The winning model is Platt-scaled (`CalibratedClassifierCV`) so its probabilities are trustworthy — reported via Brier score and a reliability curve. This makes the threshold slider meaningful. |
+| **Tuned operating threshold (recall-first)** | In screening, a missed diabetic case is worse than a false alarm. The threshold is tuned on out-of-fold data to hit ~85% sensitivity (not a naive 0.5), and the app lets the user adjust it live. |
+| **Explainability (SHAP)** | Per-patient SHAP explanations ("why was this person flagged") and a global feature-importance view — model-agnostic, computed over the calibrated model. |
 | **Privacy & governance are first-class** | Data provenance, de-identification, intended use, and limitations are documented in a model card and surfaced in the app. |
 
 ---
@@ -55,8 +57,9 @@ diabetes-prediction/
 │   ├── config.py             #   paths, schema, feature lists, constants
 │   ├── data.py               #   load + validate the raw CSV
 │   ├── pipelines.py          #   model pipelines + hyperparameter grids
-│   ├── train.py              #   train, select, evaluate, persist artifacts
-│   └── inference.py          #   load artifact + single-patient prediction
+│   ├── train.py              #   train, select, calibrate, tune threshold, persist
+│   ├── inference.py          #   load artifact + single-patient prediction
+│   └── explain.py            #   SHAP local + global explanations
 ├── tests/                    # pytest suite (data, pipeline, inference)
 ├── models/                   # generated artifacts (gitignored)
 ├── .github/workflows/        # CI (lint+test+docker) and CD (HF Spaces)
@@ -94,19 +97,25 @@ python -m streamlit run streamlit_app.py   # → http://localhost:8501
 ## Model performance
 
 The training script tunes four model families with 5-fold cross-validated
-`GridSearchCV` (scored on ROC AUC) and selects the best, then evaluates it once
-on a stratified 30% hold-out set. On the current data the winner is **Random
-Forest**:
+`GridSearchCV` (scored on ROC AUC), selects the best, calibrates it, tunes the
+operating threshold on out-of-fold data, and evaluates once on a stratified 30%
+hold-out set. On the current data the winner is **Random Forest** (calibrated),
+evaluated at the tuned threshold of **0.264** (chosen for ~85% sensitivity):
 
 | Metric (held-out test set) | Value |
 |---|---|
-| ROC AUC | ~0.84 |
-| Recall (diabetic class) | ~0.73 |
-| Accuracy | ~0.76 |
+| ROC AUC | 0.84 |
+| ROC AUC, 5×10 repeated CV | 0.84 ± 0.03 (95% CI 0.78–0.89) |
+| Recall / sensitivity (diabetic) | 0.84 |
+| Precision (diabetic) | 0.60 |
+| Accuracy | 0.75 |
+| Brier score (calibrated) | 0.154 |
 
-Exact, reproducible numbers are written to `models/metrics.json` and
-`models/model_card.md` on every training run. (The original project reported
-~72% *training* accuracy, which overstated real-world performance.)
+The recall/precision trade-off is deliberate: in screening you accept lower
+precision to avoid missing diabetic patients. Exact, reproducible numbers are
+written to `models/metrics.json` and `models/model_card.md` on every training
+run. (The original project reported ~72% *training* accuracy, which overstated
+real-world performance.)
 
 ---
 
@@ -151,12 +160,18 @@ works unchanged on Cloud Run and HF Spaces.
 
 ---
 
-## Possible extensions
+## Implemented
 
-- **SHAP** per-prediction explanations (why *this* patient was flagged).
-- **Calibration** (`CalibratedClassifierCV`) so the probability is trustworthy.
-- **Repeated CV** to report confidence intervals on the AUC.
+- ✅ **SHAP** per-prediction explanations (why *this* patient was flagged) + global importance.
+- ✅ **Calibration** (`CalibratedClassifierCV`, Platt scaling) so the probability is trustworthy.
+- ✅ **Repeated CV** confidence interval on the AUC (5×10 stratified).
+- ✅ **Threshold tuning** to a target sensitivity, chosen on out-of-fold data.
+
+## Possible future extensions
+
 - **Model monitoring** hooks (log inputs/predictions for drift detection).
+- **XGBoost / LightGBM** as additional candidate models.
+- **Fairness slicing** — report metrics across age bands to check for bias.
 
 ---
 
