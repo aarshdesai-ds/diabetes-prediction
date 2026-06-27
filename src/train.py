@@ -22,10 +22,12 @@ from sklearn.base import clone
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.metrics import (
     accuracy_score,
+    average_precision_score,
     brier_score_loss,
     classification_report,
     confusion_matrix,
     f1_score,
+    precision_recall_curve,
     precision_score,
     recall_score,
     roc_auc_score,
@@ -113,9 +115,9 @@ def train_and_select(verbose: bool = True):
         CalibratedClassifierCV(clone(best_pipe), method=CALIBRATION_METHOD, cv=CALIBRATION_CV),
         X_train, y_train, cv=cv, method="predict_proba",
     )[:, 1]
-    recommended_threshold = _choose_threshold(y_train.to_numpy(), oof_proba, config.TARGET_RECALL)
+    recommended_threshold = _choose_threshold(y_train.to_numpy(), oof_proba)
     if verbose:
-        print(f"Recommended threshold for >= {config.TARGET_RECALL:.0%} recall: "
+        print(f"Recommended threshold ({config.THRESHOLD_STRATEGY} strategy): "
               f"{recommended_threshold:.3f}")
 
     # --- (6) Held-out test evaluation of the calibrated model --------------
@@ -125,13 +127,22 @@ def train_and_select(verbose: bool = True):
     brier_cal = brier_score_loss(y_test, y_proba)
     frac_pos, mean_pred = calibration_curve(y_test, y_proba, n_bins=10, strategy="quantile")
 
+    # AUPRC (average precision) — more informative than ROC AUC under class
+    # imbalance. The no-skill baseline is the positive prevalence.
+    auprc = average_precision_score(y_test, y_proba)
+    prevalence = float(y_test.mean())
+    pr_precision, pr_recall, _ = precision_recall_curve(y_test, y_proba)
+    pr_curve = _downsample_curve(pr_recall, pr_precision, n=60)
+
     metrics = {
         "generated_on": str(date.today()),
         "best_model": best_name,
         "best_params": leaderboard[best_name]["best_params"],
         "calibration_method": CALIBRATION_METHOD,
         "recommended_threshold": round(float(recommended_threshold), 3),
+        "threshold_strategy": config.THRESHOLD_STRATEGY,
         "target_recall": config.TARGET_RECALL,
+        "target_precision": config.TARGET_PRECISION,
         "leaderboard": leaderboard,
         "repeated_cv": repeated_cv,
         "test_set": {
@@ -139,6 +150,9 @@ def train_and_select(verbose: bool = True):
             "threshold": round(float(recommended_threshold), 3),
             "accuracy": round(float(accuracy_score(y_test, y_pred)), 4),
             "roc_auc": round(float(roc_auc_score(y_test, y_proba)), 4),
+            "auprc": round(float(auprc), 4),
+            "auprc_baseline": round(prevalence, 4),
+            "pr_curve": pr_curve,
             "precision_diabetic": round(float(precision_score(y_test, y_pred)), 4),
             "recall_diabetic": round(float(recall_score(y_test, y_pred)), 4),
             "f1_diabetic": round(float(f1_score(y_test, y_pred)), 4),
@@ -170,32 +184,63 @@ def train_and_select(verbose: bool = True):
         t = metrics["test_set"]
         print(f"\nSelected & calibrated: {best_name}")
         print(f"  Held-out test ROC AUC : {t['roc_auc']}")
+        print(f"  Held-out test AUPRC   : {t['auprc']} (baseline {t['auprc_baseline']})")
         print(f"  Recall (diabetic)     : {t['recall_diabetic']}")
+        print(f"  Precision (diabetic)  : {t['precision_diabetic']}")
         print(f"  Brier (uncal -> cal)  : {brier_uncal:.4f} -> {brier_cal:.4f}")
         print(f"  Artifacts written to  : {config.MODELS_DIR}")
 
     return best_name, final_model, metrics
 
 
-def _choose_threshold(y_true, proba, target_recall: float) -> float:
-    """Highest probability threshold whose recall is still >= target_recall.
+def _choose_threshold(y_true, proba) -> float:
+    """Pick an operating threshold per ``config.THRESHOLD_STRATEGY``.
 
-    Higher thresholds mean higher precision but lower recall, so among all
-    thresholds that catch enough diabetic cases we take the most precise one.
-    Falls back to 0.5 if the target recall is unattainable.
+    - "recall":    highest threshold whose recall >= TARGET_RECALL (most precise
+                   point that still catches enough cases) — the screening default.
+    - "precision": lowest threshold whose precision >= TARGET_PRECISION (most
+                   sensitive point that still avoids too many false alarms).
+    - "f1":        threshold that maximises F1 (no error treated as worse).
+
+    Falls back to 0.5 if the target is unattainable.
     """
-    thresholds = np.unique(proba)
+    strategy = config.THRESHOLD_STRATEGY
+    candidates = np.unique(proba)
+    positives = int((y_true == 1).sum())
+
+    if strategy == "f1":
+        best_t, best_f1 = config.DEFAULT_THRESHOLD, -1.0
+        for t in candidates:
+            pred = (proba >= t).astype(int)
+            f1 = f1_score(y_true, pred, zero_division=0)
+            if f1 > best_f1:
+                best_t, best_f1 = float(t), f1
+        return best_t
+
     best = config.DEFAULT_THRESHOLD
     found = False
-    for t in thresholds:
+    for t in candidates:
         pred = (proba >= t).astype(int)
         tp = int(((pred == 1) & (y_true == 1)).sum())
-        positives = int((y_true == 1).sum())
+        predicted_pos = int((pred == 1).sum())
         recall = tp / positives if positives else 0.0
-        if recall >= target_recall:
-            best = float(t)  # keep raising t while recall stays >= target
-            found = True
+        precision = tp / predicted_pos if predicted_pos else 1.0
+        if strategy == "precision":
+            if precision >= config.TARGET_PRECISION and not found:
+                best, found = float(t), True  # first (lowest) t meeting precision
+        else:  # "recall"
+            if recall >= config.TARGET_RECALL:
+                best, found = float(t), True  # keep raising t while recall holds
     return best if found else config.DEFAULT_THRESHOLD
+
+
+def _downsample_curve(x, y, n: int) -> dict:
+    """Evenly sample up to ``n`` points from a curve, rounding for compact JSON."""
+    idx = np.linspace(0, len(x) - 1, min(n, len(x))).astype(int)
+    return {
+        "recall": [round(float(x[i]), 4) for i in idx],
+        "precision": [round(float(y[i]), 4) for i in idx],
+    }
 
 
 def _jsonable(v):
@@ -257,11 +302,12 @@ held-out 30% test set.
 
 ## Held-out test performance ({t['n_samples']} samples)
 Evaluated at the recommended operating threshold **{m['recommended_threshold']}**
-(chosen on out-of-fold data to reach ~{int(m['target_recall'] * 100)}% sensitivity).
+(chosen on out-of-fold data using the *{m['threshold_strategy']}* strategy).
 
 | Metric | Value |
 |---|---|
 | ROC AUC | {t['roc_auc']} |
+| AUPRC (avg precision) | {t['auprc']} (no-skill baseline {t['auprc_baseline']}) |
 | Accuracy | {t['accuracy']} |
 | Precision (diabetic) | {t['precision_diabetic']} |
 | Recall (diabetic) | {t['recall_diabetic']} |

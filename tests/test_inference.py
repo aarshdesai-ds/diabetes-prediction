@@ -15,6 +15,15 @@ def test_metrics_have_required_fields():
     assert 0.0 <= m["test_set"]["recall_diabetic"] <= 1.0
 
 
+def test_auprc_present_and_beats_baseline():
+    t = load_metrics()["test_set"]
+    assert 0.0 <= t["auprc"] <= 1.0
+    # A useful model's AUPRC should exceed the no-skill prevalence baseline.
+    assert t["auprc"] > t["auprc_baseline"]
+    # The PR curve was stored for plotting.
+    assert len(t["pr_curve"]["recall"]) == len(t["pr_curve"]["precision"]) > 1
+
+
 def test_calibration_and_threshold_metrics():
     m = load_metrics()
     # Calibration should not make the Brier score worse.

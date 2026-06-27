@@ -106,13 +106,18 @@ evaluated at the tuned threshold of **0.264** (chosen for ~85% sensitivity):
 |---|---|
 | ROC AUC | 0.84 |
 | ROC AUC, 5×10 repeated CV | 0.84 ± 0.03 (95% CI 0.78–0.89) |
+| **AUPRC** (avg precision) | **0.74** (no-skill baseline 0.35) |
 | Recall / sensitivity (diabetic) | 0.84 |
 | Precision (diabetic) | 0.60 |
 | Accuracy | 0.75 |
 | Brier score (calibrated) | 0.154 |
 
-The recall/precision trade-off is deliberate: in screening you accept lower
-precision to avoid missing diabetic patients. Exact, reproducible numbers are
+AUPRC is reported alongside ROC AUC because it focuses on the diabetic
+(positive) class and is more honest under class imbalance — 0.74 against a
+0.35 no-skill baseline. The recall/precision trade-off is deliberate: in
+screening you accept lower precision to avoid missing diabetic patients. The
+threshold strategy is configurable (`THRESHOLD_STRATEGY` in `src/config.py`:
+`recall` / `precision` / `f1`) to model a different cost trade-off. Exact, reproducible numbers are
 written to `models/metrics.json` and `models/model_card.md` on every training
 run. (The original project reported ~72% *training* accuracy, which overstated
 real-world performance.)

@@ -52,6 +52,28 @@ def app(diabetes_df):
         ax.set_title(f"Test-set confusion matrix (threshold {thr})")
         st.pyplot(fig)
 
+    # --- Precision-Recall curve (AUPRC) -----------------------------------
+    if st.checkbox("Precision-Recall curve (AUPRC)"):
+        t = metrics["test_set"]
+        pr = t.get("pr_curve")
+        if pr:
+            fig, ax = plt.subplots(figsize=(6, 5))
+            ax.plot(pr["recall"], pr["precision"], "-", color="#2c7fb8",
+                    label=f"Model (AUPRC = {t['auprc']})")
+            ax.axhline(t["auprc_baseline"], ls="--", color="grey",
+                       label=f"No-skill baseline ({t['auprc_baseline']})")
+            ax.set_xlabel("Recall (sensitivity)")
+            ax.set_ylabel("Precision")
+            ax.set_title("Precision-Recall curve")
+            ax.set_ylim(0, 1.02)
+            ax.legend()
+            st.pyplot(fig)
+            st.caption(
+                "AUPRC focuses on the diabetic (positive) class and is more "
+                "informative than ROC AUC under class imbalance. The no-skill "
+                "baseline equals the diabetic prevalence in the test set."
+            )
+
     # --- Calibration reliability curve ------------------------------------
     if st.checkbox("Calibration curve"):
         cal = metrics.get("calibration", {})
@@ -77,6 +99,7 @@ def app(diabetes_df):
         st.json({
             "Operating threshold": t.get("threshold"),
             "ROC AUC": t["roc_auc"],
+            "AUPRC (baseline)": f"{t['auprc']} ({t['auprc_baseline']})",
             "Accuracy": t["accuracy"],
             "Precision (diabetic)": t["precision_diabetic"],
             "Recall (diabetic)": t["recall_diabetic"],

@@ -65,7 +65,13 @@ TEST_SIZE = 0.30
 # so the app lets the user lower this.
 DEFAULT_THRESHOLD = 0.5
 
-# For a screening tool we tune the operating threshold to hit a target
-# sensitivity (recall on the diabetic class) rather than using a naive 0.5.
-# The chosen threshold is picked on out-of-fold data and stored in metrics.json.
+# How the operating threshold is chosen (on out-of-fold data, stored in
+# metrics.json). For a screening tool we default to "recall" — missing a
+# diabetic case is worse than a false alarm. Alternatives let you demonstrate
+# a different cost model:
+#   "recall"    -> highest threshold that still reaches TARGET_RECALL
+#   "precision" -> lowest threshold that still reaches TARGET_PRECISION
+#   "f1"        -> threshold that maximises F1 (no asymmetry assumed)
+THRESHOLD_STRATEGY = "recall"
 TARGET_RECALL = 0.85
+TARGET_PRECISION = 0.60
