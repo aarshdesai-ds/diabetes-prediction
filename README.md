@@ -77,12 +77,15 @@ pip install -r requirements-dev.txt
 python -m src.train
 
 # 2. Run the tests + linter
-pytest -q
-ruff check .
+python -m pytest -q
+python -m ruff check .
 
 # 3. Launch the app
-streamlit run streamlit_app.py   # → http://localhost:8501
+python -m streamlit run streamlit_app.py   # → http://localhost:8501
 ```
+
+> Tip: the `python -m` prefix works even if your `Scripts/` directory isn't on
+> PATH (common on Windows). Plain `pytest` / `streamlit` work too once it is.
 
 > If you skip step 1, the app trains the model automatically on first request.
 
