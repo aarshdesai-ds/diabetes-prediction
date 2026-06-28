@@ -1,0 +1,304 @@
+{
+  "generated_on": "2026-06-28",
+  "best_model": "Random Forest",
+  "best_params": {
+    "clf__max_depth": 6,
+    "clf__max_features": "sqrt",
+    "clf__min_samples_leaf": 5
+  },
+  "calibration_method": "sigmoid",
+  "recommended_threshold": 0.264,
+  "threshold_strategy": "recall",
+  "target_recall": 0.85,
+  "target_precision": 0.6,
+  "leaderboard": {
+    "Logistic Regression": {
+      "cv_roc_auc": 0.8318,
+      "best_params": {
+        "clf__C": 0.01,
+        "clf__penalty": "l2"
+      }
+    },
+    "Decision Tree": {
+      "cv_roc_auc": 0.8153,
+      "best_params": {
+        "clf__criterion": "entropy",
+        "clf__max_depth": 3,
+        "clf__min_samples_leaf": 10
+      }
+    },
+    "Random Forest": {
+      "cv_roc_auc": 0.8417,
+      "best_params": {
+        "clf__max_depth": 6,
+        "clf__max_features": "sqrt",
+        "clf__min_samples_leaf": 5
+      }
+    },
+    "Gradient Boosting": {
+      "cv_roc_auc": 0.8341,
+      "best_params": {
+        "clf__learning_rate": 0.1,
+        "clf__max_depth": 2,
+        "clf__n_estimators": 100
+      }
+    }
+  },
+  "repeated_cv": {
+    "n_splits": 5,
+    "n_repeats": 10,
+    "mean_roc_auc": 0.8413,
+    "std_roc_auc": 0.0281,
+    "ci95_low": 0.7793,
+    "ci95_high": 0.8868
+  },
+  "test_set": {
+    "n_samples": 231,
+    "threshold": 0.264,
+    "accuracy": 0.7489,
+    "roc_auc": 0.8414,
+    "auprc": 0.7393,
+    "auprc_baseline": 0.3506,
+    "pr_curve": {
+      "recall": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        0.9877,
+        0.9877,
+        0.9877,
+        0.9753,
+        0.9753,
+        0.9753,
+        0.9753,
+        0.9753,
+        0.963,
+        0.963,
+        0.963,
+        0.963,
+        0.963,
+        0.9506,
+        0.9383,
+        0.9136,
+        0.9012,
+        0.9012,
+        0.9012,
+        0.9012,
+        0.9012,
+        0.8765,
+        0.8519,
+        0.8272,
+        0.8025,
+        0.7778,
+        0.7654,
+        0.7531,
+        0.7284,
+        0.6914,
+        0.679,
+        0.6296,
+        0.6296,
+        0.5802,
+        0.5432,
+        0.5309,
+        0.5185,
+        0.4815,
+        0.4691,
+        0.4321,
+        0.4198,
+        0.3951,
+        0.3704,
+        0.3333,
+        0.284,
+        0.2346,
+        0.1975,
+        0.1852,
+        0.1358,
+        0.0988,
+        0.0494,
+        0.0
+      ],
+      "precision": [
+        0.3506,
+        0.3553,
+        0.3616,
+        0.3682,
+        0.375,
+        0.3821,
+        0.3894,
+        0.3971,
+        0.4,
+        0.4082,
+        0.4167,
+        0.4202,
+        0.427,
+        0.4365,
+        0.4463,
+        0.4566,
+        0.4615,
+        0.4727,
+        0.4845,
+        0.4968,
+        0.5098,
+        0.5168,
+        0.5241,
+        0.5248,
+        0.529,
+        0.5448,
+        0.5615,
+        0.5794,
+        0.5984,
+        0.6017,
+        0.6053,
+        0.6091,
+        0.6132,
+        0.6176,
+        0.6327,
+        0.6489,
+        0.6484,
+        0.6437,
+        0.6627,
+        0.6456,
+        0.68,
+        0.662,
+        0.6567,
+        0.6825,
+        0.7119,
+        0.7091,
+        0.7451,
+        0.7447,
+        0.7727,
+        0.8,
+        0.8333,
+        0.8438,
+        0.8214,
+        0.7917,
+        0.8,
+        0.9375,
+        0.9167,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "precision_diabetic": 0.6018,
+    "recall_diabetic": 0.8395,
+    "f1_diabetic": 0.701,
+    "confusion_matrix": [
+      [
+        105,
+        45
+      ],
+      [
+        13,
+        68
+      ]
+    ],
+    "classification_report": {
+      "Non-diabetic": {
+        "precision": 0.8898305084745762,
+        "recall": 0.7,
+        "f1-score": 0.7835820895522388,
+        "support": 150.0
+      },
+      "Diabetic": {
+        "precision": 0.6017699115044248,
+        "recall": 0.8395061728395061,
+        "f1-score": 0.7010309278350515,
+        "support": 81.0
+      },
+      "accuracy": 0.7489177489177489,
+      "macro avg": {
+        "precision": 0.7458002099895005,
+        "recall": 0.769753086419753,
+        "f1-score": 0.7423065086936451,
+        "support": 231.0
+      },
+      "weighted avg": {
+        "precision": 0.7888222471993284,
+        "recall": 0.7489177489177489,
+        "f1-score": 0.7546355783007576,
+        "support": 231.0
+      }
+    }
+  },
+  "calibration": {
+    "brier_uncalibrated": 0.1563,
+    "brier_calibrated": 0.154,
+    "reliability_curve": {
+      "mean_predicted": [
+        0.057,
+        0.0692,
+        0.0973,
+        0.1387,
+        0.1996,
+        0.3237,
+        0.4577,
+        0.566,
+        0.6937,
+        0.7954
+      ],
+      "fraction_positive": [
+        0.0,
+        0.087,
+        0.0435,
+        0.2174,
+        0.1304,
+        0.4348,
+        0.6087,
+        0.5217,
+        0.6522,
+        0.8261
+      ]
+    }
+  },
+  "fairness": {
+    "by_age": [
+      {
+        "band": "21\u201329",
+        "n": 129,
+        "prevalence": 0.1938,
+        "recall": 0.64,
+        "precision": 0.4444,
+        "roc_auc": 0.8015
+      },
+      {
+        "band": "30\u201339",
+        "n": 47,
+        "prevalence": 0.5957,
+        "recall": 0.8929,
+        "precision": 0.7576,
+        "roc_auc": 0.8233
+      },
+      {
+        "band": "40\u201349",
+        "n": 29,
+        "prevalence": 0.5517,
+        "recall": 1.0,
+        "precision": 0.6667,
+        "roc_auc": 0.8558
+      },
+      {
+        "band": "50+",
+        "n": 26,
+        "prevalence": 0.4615,
+        "recall": 0.9167,
+        "precision": 0.55,
+        "roc_auc": 0.7976
+      }
+    ]
+  },
+  "features": [
+    "Glucose",
+    "BloodPressure",
+    "Insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "Age"
+  ],
+  "n_total_records": 768
+}

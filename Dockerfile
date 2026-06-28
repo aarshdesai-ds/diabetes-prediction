@@ -14,12 +14,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application source.
+# Copy the application source (includes the committed model artifacts).
 COPY . .
 
-# Train the model at build time so the image ships with a ready artifact.
-# (Falls back to train-on-first-request at runtime if the artifact is absent.)
-RUN python -m src.train
+# Validate that the artifacts load in this image; train only if missing. This
+# fails the build early if the model can't be loaded, rather than at runtime.
+RUN python -c "from src.inference import load_model, load_metrics; load_model(); load_metrics()"
 
 # Hugging Face Spaces and Cloud Run both inject $PORT; default to 8501 locally.
 ENV PORT=8501

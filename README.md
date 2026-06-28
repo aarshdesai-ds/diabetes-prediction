@@ -61,7 +61,7 @@ diabetes-prediction/
 │   ├── inference.py          #   load artifact + single-patient prediction
 │   └── explain.py            #   SHAP local + global explanations
 ├── tests/                    # pytest suite (data, pipeline, inference)
-├── models/                   # generated artifacts (gitignored)
+├── models/                   # committed artifacts (model, metrics, model card)
 ├── .github/workflows/        # CI (lint+test+docker) and CD (HF Spaces)
 ├── Dockerfile                # container for Docker / Cloud Run / HF Spaces
 ├── diabetes.csv              # dataset
