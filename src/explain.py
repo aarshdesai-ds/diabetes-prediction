@@ -1,12 +1,12 @@
-"""SHAP explainability for the deployed model.
+"""Explainability for the deployed model.
 
-The shipped model is a calibrated pipeline (preprocessing + classifier wrapped
-in CalibratedClassifierCV), so we use a model-agnostic SHAP KernelExplainer
-over ``predict_proba``. With only six features, exact Shapley values are cheap.
-
-Two views are exposed:
-  - ``explain_one`` — per-patient feature contributions (local explanation),
-  - ``global_importance`` — mean |SHAP| across a sample (global explanation).
+Two complementary views:
+  - ``explain_one`` — per-patient SHAP contributions (local explanation). Uses a
+    model-agnostic SHAP KernelExplainer over ``predict_proba`` on a single row.
+  - ``global_importance`` — permutation importance across the dataset (global
+    explanation). Permutation importance is used here rather than batched SHAP
+    because it is robust across library versions and environments (batched
+    KernelExplainer can break on some shap/numpy combinations).
 """
 from __future__ import annotations
 
@@ -15,13 +15,12 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 import shap
+from sklearn.inspection import permutation_importance
 
 from . import config, data
 from .inference import load_model
 
-# Exact for 6 features (2**6 = 64 coalitions); cheap and deterministic.
-_NSAMPLES = min(2 ** len(config.FEATURES), 512)
-_BACKGROUND_K = 10  # k-means summary of the training data used as the baseline
+_BACKGROUND_K = 10  # k-means summary of the training data used as the SHAP baseline
 
 
 def _predict_proba_np(arr: np.ndarray) -> np.ndarray:
@@ -38,7 +37,7 @@ def _explainer():
 
 
 def explain_one(features: dict) -> dict:
-    """Return a local explanation for one patient.
+    """Return a local SHAP explanation for one patient.
 
     Keys: ``base_value`` (population baseline probability), ``prediction``
     (this patient's probability), and ``contributions`` (per-feature SHAP value,
@@ -46,7 +45,7 @@ def explain_one(features: dict) -> dict:
     """
     explainer = _explainer()
     row = np.array([[features[f] for f in config.FEATURES]], dtype=float)
-    shap_values = np.asarray(explainer.shap_values(row, nsamples=_NSAMPLES, silent=True)).reshape(-1)
+    shap_values = np.asarray(explainer.shap_values(row, silent=True)).reshape(-1)
     base = float(np.ravel(explainer.expected_value)[0])
     return {
         "base_value": base,
@@ -56,13 +55,16 @@ def explain_one(features: dict) -> dict:
 
 
 @lru_cache(maxsize=1)
-def global_importance(sample_size: int = 80) -> dict:
-    """Mean absolute SHAP value per feature across a sample (global importance)."""
-    X, _ = data.split_X_y(data.load_raw())
-    sample = X.sample(min(sample_size, len(X)), random_state=config.RANDOM_STATE)
-    explainer = _explainer()
-    shap_values = np.asarray(
-        explainer.shap_values(sample.to_numpy(), nsamples=_NSAMPLES, silent=True)
+def global_importance() -> dict:
+    """Permutation importance per feature (drop in ROC AUC when shuffled).
+
+    Robust and model-agnostic. Values are the mean AUC decrease across repeats;
+    larger = more important. Small negative values (noise) are possible.
+    """
+    X, y = data.split_X_y(data.load_raw())
+    model = load_model()
+    result = permutation_importance(
+        model, X, y, scoring="roc_auc", n_repeats=10,
+        random_state=config.RANDOM_STATE, n_jobs=-1,
     )
-    mean_abs = np.abs(shap_values).mean(axis=0)
-    return dict(zip(config.FEATURES, mean_abs.tolist(), strict=False))
+    return dict(zip(config.FEATURES, result.importances_mean.tolist(), strict=False))

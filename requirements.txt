@@ -7,4 +7,6 @@ scikit-learn==1.7.2
 matplotlib>=3.7
 seaborn>=0.12
 joblib>=1.3
-shap>=0.44
+# Pinned: SHAP's KernelExplainer behaviour varies across versions; pin the one
+# the app is tested against so local and deployed environments match.
+shap==0.51.0

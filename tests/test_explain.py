@@ -23,7 +23,10 @@ def test_shap_values_reconstruct_the_prediction():
     assert np.isclose(reconstructed, exp["prediction"], atol=1e-6)
 
 
-def test_global_importance_is_nonnegative_per_feature():
-    imp = global_importance(sample_size=30)
+def test_global_importance_covers_all_features():
+    imp = global_importance()
     assert set(imp) == set(config.FEATURES)
-    assert all(v >= 0 for v in imp.values())
+    # Permutation importances are finite numbers (can be slightly negative).
+    assert all(np.isfinite(v) for v in imp.values())
+    # Glucose is the strongest predictor in this dataset; sanity-check it leads.
+    assert imp["Glucose"] == max(imp.values())

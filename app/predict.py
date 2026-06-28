@@ -61,8 +61,11 @@ def app(diabetes_df):
             )
 
         with st.expander("Why this prediction? (SHAP explanation)", expanded=True):
-            with st.spinner("Computing feature contributions…"):
-                _render_explanation(inputs)
+            try:
+                with st.spinner("Computing feature contributions…"):
+                    _render_explanation(inputs)
+            except Exception as exc:  # noqa: BLE001 - degrade gracefully in the UI
+                st.info(f"Explanation unavailable for this input ({exc}).")
 
         st.caption(
             "Reminder: educational demo only — not a medical device. See the "

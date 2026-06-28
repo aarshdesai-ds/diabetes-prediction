@@ -135,17 +135,22 @@ def app(diabetes_df):
                     "noisy estimates."
                 )
 
-    # --- Global SHAP importance -------------------------------------------
-    if st.checkbox("Global feature importance (SHAP)", value=True):
-        with st.spinner("Computing SHAP values across a sample…"):
-            imp = pd.Series(global_importance()).sort_values()
-        imp.index = [config.FEATURE_LABELS.get(f, f) for f in imp.index]
-        fig, ax = plt.subplots(figsize=(8, 4))
-        imp.plot.barh(ax=ax, color="#2c7fb8")
-        ax.set_title("Mean |SHAP| — average impact on the prediction")
-        ax.set_xlabel("Mean absolute SHAP value")
-        st.pyplot(fig)
-        st.caption(
-            "Model-agnostic SHAP attribution over the calibrated model. Larger "
-            "bars mean the feature moves predictions more, on average."
-        )
+    # --- Global feature importance (permutation) --------------------------
+    if st.checkbox("Global feature importance", value=True):
+        try:
+            with st.spinner("Computing permutation importance…"):
+                imp = pd.Series(global_importance()).sort_values()
+            imp.index = [config.FEATURE_LABELS.get(f, f) for f in imp.index]
+            fig, ax = plt.subplots(figsize=(8, 4))
+            imp.plot.barh(ax=ax, color="#2c7fb8")
+            ax.set_title("Permutation importance — drop in ROC AUC when shuffled")
+            ax.set_xlabel("Mean ROC AUC decrease")
+            ax.axvline(0, color="#444", linewidth=0.8)
+            st.pyplot(fig)
+            st.caption(
+                "Model-agnostic permutation importance over the calibrated model: "
+                "how much test ROC AUC drops when each feature is randomly shuffled. "
+                "Larger = more important. (Per-patient SHAP is on the Predict page.)"
+            )
+        except Exception as exc:  # noqa: BLE001 - degrade gracefully in the UI
+            st.info(f"Feature importance unavailable ({exc}).")
