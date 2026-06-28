@@ -37,6 +37,7 @@ jobs:
         if: steps.cfg.outputs.ready == 'true'
         with:
           fetch-depth: 0
+          lfs: true
 
       # The HF Space Docker metadata lives in README.md frontmatter, so we just
       # mirror the repo to the Space (force, since their histories differ).

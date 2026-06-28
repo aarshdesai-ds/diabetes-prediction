@@ -25,15 +25,28 @@ def _ensure_artifacts() -> None:
 
 @lru_cache(maxsize=1)
 def load_model():
-    """Load the fitted pipeline, training it once if no artifact exists yet."""
+    """Load the fitted pipeline, (re)training if the artifact is missing or unusable.
+
+    The retrain-on-failure path also covers the case where the file on disk is an
+    un-materialised Git LFS pointer (e.g. a checkout without ``git lfs pull``) or
+    a pickle from an incompatible scikit-learn version.
+    """
     _ensure_artifacts()
-    return joblib.load(config.MODEL_PATH)
+    try:
+        return joblib.load(config.MODEL_PATH)
+    except Exception:
+        train_and_select(verbose=False)
+        return joblib.load(config.MODEL_PATH)
 
 
 @lru_cache(maxsize=1)
 def load_metrics() -> dict:
     _ensure_artifacts()
-    return json.loads(config.METRICS_PATH.read_text())
+    try:
+        return json.loads(config.METRICS_PATH.read_text())
+    except json.JSONDecodeError:
+        train_and_select(verbose=False)
+        return json.loads(config.METRICS_PATH.read_text())
 
 
 def predict_one(features: dict, threshold: float = config.DEFAULT_THRESHOLD):
