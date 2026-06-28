@@ -1,5 +1,4 @@
 # Normalize line endings to LF in the repo (important for the Docker/Linux build).
 * text=auto eol=lf
 *.png binary
-*.joblib binary
 *.joblib filter=lfs diff=lfs merge=lfs -text
