@@ -1,3 +1,14 @@
+---
+title: Early Diabetes Risk Screening
+emoji: 🩺
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 8501
+pinned: false
+license: mit
+---
+
 # 🩺 Early Diabetes Risk — Screening Demo
 
 [![CI](https://github.com/aarshdesai-ds/diabetes-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/aarshdesai-ds/diabetes-prediction/actions/workflows/ci.yml)
